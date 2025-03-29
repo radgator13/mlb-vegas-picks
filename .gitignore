@@ -1,13 +1,57 @@
-# Ignore VS, PyCharm, cache, logs
-*.vsidx
-*.user
-*.pyproj
-*.suo
+# ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.so
+*.egg-info/
+.env
+.venv
+env/
+venv/
+pip-log.txt
+*.log
+
+# ========================
+# Jupyter/IPython
+# ========================
+.ipynb_checkpoints
+
+# ========================
+# Streamlit
+# ========================
+.streamlit/
+
+# ========================
+# Local data and logs
+# ========================
+*.csv
+*.tsv
+*.xlsx
+data/
+logs/
+statcast_cache.csv
+
+# ========================
+# Visual Studio / VS Code
+# ========================
 .vscode/
 .vs/
-.idea/
-__pycache__/
-*.pyc
-*.pyo
-logs/
-data/
+*.user
+*.suo
+*.pyproj
+*.vsidx
+*.dbmdl
+*.psess
+*.vspx
+*.vsp
+
+# ========================
+# macOS and Windows junk
+# ========================
+.DS_Store
+Thumbs.db
+desktop.ini
