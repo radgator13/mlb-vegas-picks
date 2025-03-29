@@ -29,7 +29,8 @@ start_date = pd.to_datetime("2024-07-01")
 end_date = pd.to_datetime(target_date)
 
 @st.cache_data(show_spinner=False)
-def get_statcast_cached(start, end, cache_file="statcast_cache.csv"):
+def get_statcast_cached(start, end, cache_file="data/statcast_cache.csv"):
+    os.makedirs("data", exist_ok=True)  # ✅ ensure /data exists
     if os.path.exists(cache_file):
         return pd.read_csv(cache_file, parse_dates=['game_date'])
     df = statcast(start_dt=start.strftime('%Y-%m-%d'), end_dt=end.strftime('%Y-%m-%d'))

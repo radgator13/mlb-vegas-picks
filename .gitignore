@@ -1,0 +1,13 @@
+# Ignore VS, PyCharm, cache, logs
+*.vsidx
+*.user
+*.pyproj
+*.suo
+.vscode/
+.vs/
+.idea/
+__pycache__/
+*.pyc
+*.pyo
+logs/
+data/
