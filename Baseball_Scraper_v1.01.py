@@ -25,27 +25,20 @@ st.set_page_config(layout="wide")
 st.title("⚾ MLB Picks vs Vegas")
 
 target_date = st.date_input("Select Game Date:")
-start_date = pd.to_datetime("2024-07-01")
+start_date = target_date - pd.Timedelta(days=30)
 end_date = pd.to_datetime(target_date)
 
+# --- Load Statcast Data Dynamically Based on Selected Date ---
 @st.cache_resource(show_spinner=False)
-def get_statcast_cached(start, end, cache_file="data/statcast_cache.csv"):
-    os.makedirs("data", exist_ok=True)
-
-    if os.path.exists(cache_file):
-        st.info("📁 Loaded cached Statcast data from data/statcast_cache.csv")
-        return pd.read_csv(cache_file, parse_dates=['game_date'])
-
-    st.info("📡 Downloading fresh Statcast data from Baseball Savant...")
+def get_statcast_cached(start, end):
     df = statcast(start_dt=start.strftime('%Y-%m-%d'), end_dt=end.strftime('%Y-%m-%d'))
     df = df.dropna(subset=['home_team', 'away_team', 'launch_speed', 'launch_angle'])
     df['game_date'] = pd.to_datetime(df['game_date'])
-    df.to_csv(cache_file, index=False)
     return df
-
 
 statcast_df = get_statcast_cached(start_date, end_date)
 
+# --- Rolling Team Stats ---
 def get_team_features(df):
     stats = df.groupby(['game_date', 'home_team']).agg(
         launch_speed=('launch_speed', 'mean'),
@@ -56,7 +49,8 @@ def get_team_features(df):
 
 team_rolling = get_team_features(statcast_df)
 
-@st.cache_data(show_spinner=False)
+# --- Fetch Odds ---
+@st.cache_resource(show_spinner=False)
 def fetch_vegas_odds():
     response = requests.get(ODDS_URL)
     if response.status_code != 200:
@@ -93,6 +87,7 @@ odds_df['home_team'] = odds_df['home_team'].map(TEAM_NAME_MAP)
 odds_df['away_team'] = odds_df['away_team'].map(TEAM_NAME_MAP)
 odds_df.dropna(subset=['home_team', 'away_team'], inplace=True)
 
+# --- Train Models ---
 def train_models(statcast_df, team_rolling):
     matchups = statcast_df.groupby(['game_date', 'home_team', 'away_team']).agg(
         home_score=('home_score', 'first'),
@@ -178,7 +173,7 @@ if 'Win % Edge' in results_df.columns and pd.api.types.is_numeric_dtype(results_
     results_df = results_df.sort_values(by='Win % Edge', ascending=False)
     results_df['Win % Edge'] = results_df['Win % Edge'].apply(lambda x: f"{x:.2%}" if pd.notna(x) else 'N/A')
 
-# --- Render HTML Table (Centered) ---
+# --- Centered HTML Table Display ---
 def render_html_table(df):
     html = "<style>table { width: 100%; text-align: center; } th, td { text-align: center; padding: 8px; }</style>"
     html += df.to_html(index=False, escape=False)
