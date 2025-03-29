@@ -28,16 +28,21 @@ target_date = st.date_input("Select Game Date:")
 start_date = pd.to_datetime("2024-07-01")
 end_date = pd.to_datetime(target_date)
 
-@st.cache_data(show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def get_statcast_cached(start, end, cache_file="data/statcast_cache.csv"):
-    os.makedirs("data", exist_ok=True)  # ✅ ensure /data exists
+    os.makedirs("data", exist_ok=True)
+
     if os.path.exists(cache_file):
+        st.info("📁 Loaded cached Statcast data from data/statcast_cache.csv")
         return pd.read_csv(cache_file, parse_dates=['game_date'])
+
+    st.info("📡 Downloading fresh Statcast data from Baseball Savant...")
     df = statcast(start_dt=start.strftime('%Y-%m-%d'), end_dt=end.strftime('%Y-%m-%d'))
     df = df.dropna(subset=['home_team', 'away_team', 'launch_speed', 'launch_angle'])
     df['game_date'] = pd.to_datetime(df['game_date'])
     df.to_csv(cache_file, index=False)
     return df
+
 
 statcast_df = get_statcast_cached(start_date, end_date)
 
