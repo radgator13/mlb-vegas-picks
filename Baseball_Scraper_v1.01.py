@@ -28,7 +28,6 @@ target_date = st.date_input("Select Game Date:")
 start_date = target_date - pd.Timedelta(days=30)
 end_date = pd.to_datetime(target_date)
 
-# --- Load Statcast Data Dynamically Based on Selected Date ---
 @st.cache_resource(show_spinner=False)
 def get_statcast_cached(start, end):
     df = statcast(start_dt=start.strftime('%Y-%m-%d'), end_dt=end.strftime('%Y-%m-%d'))
@@ -38,7 +37,6 @@ def get_statcast_cached(start, end):
 
 statcast_df = get_statcast_cached(start_date, end_date)
 
-# --- Rolling Team Stats ---
 def get_team_features(df):
     stats = df.groupby(['game_date', 'home_team']).agg(
         launch_speed=('launch_speed', 'mean'),
@@ -49,7 +47,6 @@ def get_team_features(df):
 
 team_rolling = get_team_features(statcast_df)
 
-# --- Fetch Odds ---
 @st.cache_resource(show_spinner=False)
 def fetch_vegas_odds():
     response = requests.get(ODDS_URL)
@@ -87,7 +84,6 @@ odds_df['home_team'] = odds_df['home_team'].map(TEAM_NAME_MAP)
 odds_df['away_team'] = odds_df['away_team'].map(TEAM_NAME_MAP)
 odds_df.dropna(subset=['home_team', 'away_team'], inplace=True)
 
-# --- Train Models ---
 def train_models(statcast_df, team_rolling):
     matchups = statcast_df.groupby(['game_date', 'home_team', 'away_team']).agg(
         home_score=('home_score', 'first'),
@@ -141,13 +137,11 @@ for _, row in odds_df.iterrows():
     vegas_total = row['total_line']
     spread = row['spread']
 
-    edge_win = None
-    if row['home_odds'] is not None:
-        try:
-            vegas_win_prob = implied_prob(row['home_odds'])
-            edge_win = win_prob - vegas_win_prob
-        except:
-            edge_win = None
+    try:
+        vegas_win_prob = implied_prob(row['home_odds']) if row['home_odds'] is not None else None
+        edge_win = win_prob - vegas_win_prob if vegas_win_prob else None
+    except:
+        edge_win = None
 
     edge_total = model_total - vegas_total if vegas_total else None
     ou_pick = "Over" if edge_total and edge_total > 0 else "Under" if edge_total else "N/A"
@@ -167,13 +161,18 @@ for _, row in odds_df.iterrows():
     })
 
 results_df = pd.DataFrame(model_rows)
+
+# Ensure Win % Edge column exists
+if 'Win % Edge' not in results_df.columns:
+    results_df['Win % Edge'] = np.nan
+
 results_df = results_df[results_df['Win % Edge'].apply(lambda x: isinstance(x, (int, float)) and x > 0.05)]
 
-if 'Win % Edge' in results_df.columns and pd.api.types.is_numeric_dtype(results_df['Win % Edge']):
+if pd.api.types.is_numeric_dtype(results_df['Win % Edge']):
     results_df = results_df.sort_values(by='Win % Edge', ascending=False)
     results_df['Win % Edge'] = results_df['Win % Edge'].apply(lambda x: f"{x:.2%}" if pd.notna(x) else 'N/A')
 
-# --- Centered HTML Table Display ---
+# --- Render HTML Table (Centered) ---
 def render_html_table(df):
     html = "<style>table { width: 100%; text-align: center; } th, td { text-align: center; padding: 8px; }</style>"
     html += df.to_html(index=False, escape=False)
