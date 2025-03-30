@@ -47,7 +47,7 @@ def get_team_features(df):
         launch_angle=('launch_angle', 'mean')
     ).reset_index()
     stats['team'] = stats['home_team']
-    return stats.groupby('team').tail(5).groupby('team')[['launch_speed', 'launch_angle']].mean().reset_index()
+    return stats.groupby('team').tail(2).groupby('team')[['launch_speed', 'launch_angle']].mean().reset_index()
 
 team_rolling = get_team_features(statcast_df)
 
