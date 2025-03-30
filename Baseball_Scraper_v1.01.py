@@ -164,13 +164,21 @@ results_df = pd.DataFrame(model_rows)
 
 # Ensure Win % Edge column exists
 if 'Win % Edge' not in results_df.columns:
-    results_df['Win % Edge'] = np.nan
+    results_df = pd.DataFrame(model_rows)
 
-results_df = results_df[results_df['Win % Edge'].apply(lambda x: isinstance(x, (int, float)) and x > 0.05)]
+# Extract numeric column safely for filtering & sorting
+if 'Win % Edge' not in results_df.columns:
+    results_df['Win % Edge'] = None
 
-if pd.api.types.is_numeric_dtype(results_df['Win % Edge']):
-    results_df = results_df.sort_values(by='Win % Edge', ascending=False)
-    results_df['Win % Edge'] = results_df['Win % Edge'].apply(lambda x: f"{x:.2%}" if pd.notna(x) else 'N/A')
+# Create numeric version (for internal filtering)
+results_df['Win % Edge Num'] = pd.to_numeric(results_df['Win % Edge'], errors='coerce')
+results_df = results_df[results_df['Win % Edge Num'] > 0.05]
+
+results_df = results_df.sort_values(by='Win % Edge Num', ascending=False)
+
+# Format for display
+results_df['Win % Edge'] = results_df['Win % Edge Num'].apply(lambda x: f"{x:.2%}" if pd.notna(x) else 'N/A')
+results_df.drop(columns=['Win % Edge Num'], inplace=True)
 
 # --- Render HTML Table (Centered) ---
 def render_html_table(df):
