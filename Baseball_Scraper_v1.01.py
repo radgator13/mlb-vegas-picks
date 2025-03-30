@@ -125,11 +125,11 @@ for _, row in odds_df.iterrows():
     ht = row['home_team']
     at = row['away_team']
 
-    if ht not in team_rolling['team'].values or at not in team_rolling['team'].values:
-        continue
+    default_stats = pd.Series({'launch_speed': 88.0, 'launch_angle': 12.0})
 
-    home = team_rolling[team_rolling['team'] == ht].iloc[0]
-    away = team_rolling[team_rolling['team'] == at].iloc[0]
+    home = team_rolling[team_rolling['team'] == ht].iloc[0] if ht in team_rolling['team'].values else default_stats
+    away = team_rolling[team_rolling['team'] == at].iloc[0] if at in team_rolling['team'].values else default_stats
+
 
     features = pd.DataFrame([{
         'diff_launch_speed': home['launch_speed'] - away['launch_speed'],
