@@ -164,7 +164,13 @@ for _, row in odds_df.iterrows():
         'Recommended': "🔥 Strong Pick" if edge_win and edge_win > 0.10 else ""
     })
 
+
 results_df = pd.DataFrame(model_rows)
+
+if results_df.empty:
+    st.warning("⚠️ No predictions available for this date. Try selecting a different day or ensure there’s enough Statcast data to build rolling stats.")
+    st.stop()
+
 
 # Ensure Win % Edge column exists
 if 'Win % Edge' not in results_df.columns:
