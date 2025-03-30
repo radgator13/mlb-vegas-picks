@@ -9,7 +9,6 @@ import warnings
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-
 # --- Team Name Mapping ---
 TEAM_NAME_MAP = {
     "Arizona Diamondbacks": "ARI", "Atlanta Braves": "ATL", "Baltimore Orioles": "BAL", "Boston Red Sox": "BOS",
@@ -130,7 +129,6 @@ for _, row in odds_df.iterrows():
     home = team_rolling[team_rolling['team'] == ht].iloc[0] if ht in team_rolling['team'].values else default_stats
     away = team_rolling[team_rolling['team'] == at].iloc[0] if at in team_rolling['team'].values else default_stats
 
-
     features = pd.DataFrame([{
         'diff_launch_speed': home['launch_speed'] - away['launch_speed'],
         'diff_launch_angle': home['launch_angle'] - away['launch_angle']
@@ -164,29 +162,25 @@ for _, row in odds_df.iterrows():
         'Recommended': "🔥 Strong Pick" if edge_win and edge_win > 0.10 else ""
     })
 
-
 results_df = pd.DataFrame(model_rows)
 
+# Handle empty prediction case
 if results_df.empty:
-    st.warning("⚠️ No predictions available for this date. Try selecting a different day or ensure there’s enough Statcast data to build rolling stats.")
+    st.warning("⚠️ No predictions available for this date. Try a different day or ensure enough Statcast data is available.")
     st.stop()
 
-
-# Ensure Win % Edge column exists
-if 'Win % Edge' not in results_df.columns:
-    results_df = pd.DataFrame(model_rows)
-
-# Extract numeric column safely for filtering & sorting
+# Filter, sort, format
 if 'Win % Edge' not in results_df.columns:
     results_df['Win % Edge'] = None
 
-# Create numeric version (for internal filtering)
 results_df['Win % Edge Num'] = pd.to_numeric(results_df['Win % Edge'], errors='coerce')
 results_df = results_df[results_df['Win % Edge Num'] > 0.05]
 
-results_df = results_df.sort_values(by='Win % Edge Num', ascending=False)
+if results_df.empty:
+    st.warning("⚠️ No predictions passed the 5% edge filter.")
+    st.stop()
 
-# Format for display
+results_df = results_df.sort_values(by='Win % Edge Num', ascending=False)
 results_df['Win % Edge'] = results_df['Win % Edge Num'].apply(lambda x: f"{x:.2%}" if pd.notna(x) else 'N/A')
 results_df.drop(columns=['Win % Edge Num'], inplace=True)
 
