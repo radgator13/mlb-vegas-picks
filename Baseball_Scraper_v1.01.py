@@ -5,6 +5,10 @@ import os
 from pybaseball import statcast
 from sklearn.linear_model import LogisticRegression, LinearRegression
 import streamlit as st
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 
 # --- Team Name Mapping ---
 TEAM_NAME_MAP = {
