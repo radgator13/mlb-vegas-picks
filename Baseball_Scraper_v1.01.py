@@ -166,16 +166,15 @@ for _, row in odds_df.iterrows():
 
 results_df = pd.DataFrame(model_rows)
 
-# Handle empty prediction case
+# 🔍 Diagnostic fallback
 if results_df.empty:
-    st.warning("⚠️ No predictions available for this date. Try a different day or ensure enough Statcast data is available.")
+    st.warning("⚠️ No predictions were generated. The odds or statcast data may be incomplete for this date.")
     st.stop()
 
 # Ensure Win % Edge column exists
 if 'Win % Edge' not in results_df.columns:
     results_df['Win % Edge'] = None
 
-# Numeric filtering
 results_df['Win % Edge Num'] = pd.to_numeric(results_df['Win % Edge'], errors='coerce')
 
 if not show_all:
