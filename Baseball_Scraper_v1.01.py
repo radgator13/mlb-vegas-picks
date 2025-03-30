@@ -31,6 +31,8 @@ target_date = st.date_input("Select Game Date:")
 start_date = target_date - pd.Timedelta(days=60)
 end_date = pd.to_datetime(target_date)
 
+show_all = st.checkbox("🔍 Show all matchups (disable edge filter)", value=False)
+
 @st.cache_resource(show_spinner=False)
 def get_statcast_cached(start, end):
     df = statcast(start_dt=start.strftime('%Y-%m-%d'), end_dt=end.strftime('%Y-%m-%d'))
@@ -169,12 +171,15 @@ if results_df.empty:
     st.warning("⚠️ No predictions available for this date. Try a different day or ensure enough Statcast data is available.")
     st.stop()
 
-# Filter, sort, format
+# Ensure Win % Edge column exists
 if 'Win % Edge' not in results_df.columns:
     results_df['Win % Edge'] = None
 
+# Numeric filtering
 results_df['Win % Edge Num'] = pd.to_numeric(results_df['Win % Edge'], errors='coerce')
-results_df = results_df[results_df['Win % Edge Num'] > 0.05]
+
+if not show_all:
+    results_df = results_df[results_df['Win % Edge Num'] > 0.05]
 
 if results_df.empty:
     st.warning("⚠️ No predictions passed the 5% edge filter.")
@@ -190,7 +195,7 @@ def render_html_table(df):
     html += df.to_html(index=False, escape=False)
     return html
 
-st.subheader("📊 Model vs Vegas Picks (Filtered: Win Edge > 5%)")
+st.subheader("📊 Model vs Vegas Picks")
 st.markdown(render_html_table(results_df), unsafe_allow_html=True)
 
 st.download_button(
