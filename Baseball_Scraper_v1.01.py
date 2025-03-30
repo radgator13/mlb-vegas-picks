@@ -29,7 +29,7 @@ st.set_page_config(layout="wide")
 st.title("⚾ MLB Picks vs Vegas")
 
 target_date = st.date_input("Select Game Date:")
-start_date = target_date - pd.Timedelta(days=30)
+start_date = target_date - pd.Timedelta(days=60)
 end_date = pd.to_datetime(target_date)
 
 @st.cache_resource(show_spinner=False)
